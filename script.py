@@ -1,122 +1,143 @@
-# Expense Tracker Application
+import tkinter as tk
+from tkinter import messagebox, ttk
 
-# Function to add an expense
-def add_expense(expenses, amount, category):
-    """
-    Adds a new expense to the list of expenses.
+# Global expenses list
+expenses = []
 
-    Parameters:
-    expenses (list): The list of expenses.
-    amount (float): The amount of the expense.
-    category (str): The category of the expense.
+# Function to add expense
+def add_expense():
+    month = month_entry.get().strip()
+    amount = amount_entry.get()
+    category = category_entry.get()
 
-    Returns:
-    None
-    """
-    expenses.append({'amount': amount, 'category': category})
-    print("Expense added successfully!")
-
-# Function to display all expenses
-def print_expenses(expenses):
-    """
-    Prints all expenses in a user-friendly format.
-
-    Parameters:
-    expenses (list): The list of expenses.
-
-    Returns:
-    None
-    """
-    if not expenses:
-        print("No expenses recorded.")
+    if not month:
+        messagebox.showerror("Error", "Month cannot be empty! (e.g., May2025)")
         return
 
+    try:
+        amount = float(amount)
+        if not category:
+            messagebox.showerror("Error", "Category cannot be empty!")
+            return
+
+        expense = {'amount': amount, 'category': category}
+        expenses.append(expense)
+        messagebox.showinfo("Success", f"Added expense: ₹{amount:.2f} in '{category}'")
+        amount_entry.delete(0, tk.END)
+        category_entry.delete(0, tk.END)
+        refresh_expense_list()
+        update_total()
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid amount!")
+
+# Function to refresh expense list
+def refresh_expense_list():
+    expense_list.delete(*expense_list.get_children())
     for i, expense in enumerate(expenses, start=1):
-        print(f"{i}. Amount: {expense['amount']:.2f}, Category: {expense['category']}")
+        expense_list.insert('', 'end', values=(i, f"₹{expense['amount']:.2f}", expense['category']))
 
-# Function to calculate the total expenses
-def total_expenses(expenses):
-    """
-    Calculates the total amount of all expenses.
+# Function to update total expenses
+def update_total():
+    total = sum(exp['amount'] for exp in expenses)
+    total_label.config(text=f"Total Expenses: ₹{total:.2f}")
 
-    Parameters:
-    expenses (list): The list of expenses.
+# Function to filter by category
+def filter_by_category():
+    category = filter_entry.get()
+    filtered = [exp for exp in expenses if exp['category'].lower() == category.lower()]
 
-    Returns:
-    float: The total amount of expenses.
-    """
-    return sum(expense['amount'] for expense in expenses)
+    expense_list.delete(*expense_list.get_children())
+    for i, expense in enumerate(filtered, start=1):
+        expense_list.insert('', 'end', values=(i, f"₹{expense['amount']:.2f}", expense['category']))
 
-# Function to filter expenses by category
-def filter_expenses_by_category(expenses, category):
-    """
-    Filters and returns expenses by the specified category.
+# Function to submit all expenses to month file
+def submit_month_expenses():
+    month = month_entry.get().strip()
+    if not month:
+        messagebox.showerror("Error", "Month cannot be empty! (e.g., May2025)")
+        return
 
-    Parameters:
-    expenses (list): The list of expenses.
-    category (str): The category to filter by.
+    if not expenses:
+        messagebox.showwarning("Warning", "No expenses to submit for this month!")
+        return
 
-    Returns:
-    list: A list of expenses matching the category.
-    """
-    return [expense for expense in expenses if expense['category'].lower() == category.lower()]
+    filename = f"{month}.txt"
+    with open(filename, "a", encoding="utf-8") as file:  # <-- Added encoding
+        file.write(f"--- Expenses for {month} ---\n")
+        for exp in expenses:
+            line = f"₹{exp['amount']:.2f} - {exp['category']}\n"
+            file.write(line)
+        file.write("\n")
 
-# Main function to run the application
-def main():
-    """
-    The main function to manage the Expense Tracker application.
+    messagebox.showinfo("Submitted", f"All expenses saved to {filename}!")
+    expenses.clear()
+    refresh_expense_list()
+    update_total()
 
-    Returns:
-    None
-    """
-    expenses = []  # List to store all expenses
 
-    while True:
-        # User-friendly menu
-        print("\n======== Expense Tracker ========")
-        print("1. Add an Expense")
-        print("2. List All Expenses")
-        print("3. Show Total Expenses")
-        print("4. Filter Expenses by Category")
-        print("5. Exit")
-        print("=================================")
-        
-        choice = input("Enter your choice (1-5): ")
+    messagebox.showinfo("Submitted", f"All expenses saved to {filename}!")
+    expenses.clear()
+    refresh_expense_list()
+    update_total()
 
-        if choice == '1':  # Add an expense
-            try:
-                amount = float(input("Enter the expense amount: "))
-                category = input("Enter the expense category: ").strip()
-                if not category:
-                    print("Category cannot be empty!")
-                else:
-                    add_expense(expenses, amount, category)
-            except ValueError:
-                print("Invalid amount! Please enter a number.")
+# Initialize GUI
+root = tk.Tk()
+root.title("💸 Expense Tracker")
+root.geometry("600x600")
+root.config(bg="#f0f8ff")
 
-        elif choice == '2':  # List all expenses
-            print("\nAll Recorded Expenses:")
-            print_expenses(expenses)
+# Title
+title = tk.Label(root, text="Expense Tracker", font=("Helvetica", 20, "bold"), bg="#f0f8ff", fg="#2e8b57")
+title.pack(pady=10)
 
-        elif choice == '3':  # Show total expenses
-            print("\nTotal Expenses: {:.2f}".format(total_expenses(expenses)))
+# Input frame
+input_frame = tk.Frame(root, bg="#f0f8ff")
+input_frame.pack(pady=10)
 
-        elif choice == '4':  # Filter expenses by category
-            category = input("Enter the category to filter: ").strip()
-            if not category:
-                print("Category cannot be empty!")
-            else:
-                filtered_expenses = filter_expenses_by_category(expenses, category)
-                print(f"\nExpenses in category '{category}':")
-                print_expenses(filtered_expenses)
+tk.Label(input_frame, text="Month (e.g., May2025):", bg="#f0f8ff").grid(row=0, column=0, padx=5, pady=5)
+month_entry = tk.Entry(input_frame)
+month_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        elif choice == '5':  # Exit the program
-            print("Thank you for using the Expense Tracker. Goodbye!")
-            break
+tk.Label(input_frame, text="Amount (₹):", bg="#f0f8ff").grid(row=1, column=0, padx=5, pady=5)
+amount_entry = tk.Entry(input_frame)
+amount_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        else:  # Invalid choice
-            print("Invalid choice! Please enter a number between 1 and 5.")
+tk.Label(input_frame, text="Category:", bg="#f0f8ff").grid(row=2, column=0, padx=5, pady=5)
+category_entry = tk.Entry(input_frame)
+category_entry.grid(row=2, column=1, padx=5, pady=5)
 
-# Run the Expense Tracker
-if __name__ == "__main__":
-    main()
+add_button = tk.Button(input_frame, text="Add Expense", command=add_expense, bg="#2e8b57", fg="white")
+add_button.grid(row=3, column=0, columnspan=2, pady=10)
+
+# Filter frame
+filter_frame = tk.Frame(root, bg="#f0f8ff")
+filter_frame.pack(pady=5)
+
+tk.Label(filter_frame, text="Filter by Category:", bg="#f0f8ff").grid(row=0, column=0, padx=5)
+filter_entry = tk.Entry(filter_frame)
+filter_entry.grid(row=0, column=1, padx=5)
+filter_button = tk.Button(filter_frame, text="Filter", command=filter_by_category, bg="#4682b4", fg="white")
+filter_button.grid(row=0, column=2, padx=5)
+
+# Expense list table
+columns = ('#', 'Amount', 'Category')
+expense_list = ttk.Treeview(root, columns=columns, show='headings')
+for col in columns:
+    expense_list.heading(col, text=col)
+expense_list.pack(pady=10, fill='x')
+
+# Total label
+total_label = tk.Label(root, text="Total Expenses: ₹0.00", font=("Helvetica", 14, "bold"), bg="#f0f8ff", fg="#ff4500")
+total_label.pack(pady=10)
+
+# Submit Month button
+submit_button = tk.Button(root, text="✅ Submit All Expenses for Month", command=submit_month_expenses, bg="#ff6347", fg="white", font=("Helvetica", 12, "bold"))
+submit_button.pack(pady=15)
+
+# Run the app
+root.mainloop()
+
+
+
+
+

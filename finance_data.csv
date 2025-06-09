@@ -13,3 +13,7 @@ date,amount,category,description
 09-06-2025,10000.0,Income,Salary
 09-06-2025,2000.0,Expense,Food
 09-06-2025,200.0,Expense,Fare
+07-06-2025,500.0,Income,Bonus
+09-06-2025,10000.0,Expense,Electric bill
+09-06-2025,5000.0,Income,Bonus
+09-06-2025,500.0,Expense,food
